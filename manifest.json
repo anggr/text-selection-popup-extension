@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Text Selection Popup",
+  "version": "1.0",
+  "description": "Shows a popup with search and copy options when text is selected.",
+  "permissions": ["activeTab"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "action": {}
+}
