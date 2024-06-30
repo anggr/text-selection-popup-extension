@@ -20,9 +20,20 @@ function showPopup(event) {
     document.body.appendChild(popup);
   }
 
-  const rect = window.getSelection().getRangeAt(0).getBoundingClientRect();
-  popup.style.left = `${event.pageX}px`;
-  popup.style.top = `${rect.bottom + window.scrollY}px`;
+  const selection = window.getSelection();
+  const range = selection.getRangeAt(0);
+  const rect = range.getBoundingClientRect();
+
+  const popupHeight = 40; 
+  let topPosition = rect.top + window.scrollY - popupHeight - 5;
+
+  
+  if (topPosition < window.scrollY) {
+    topPosition = rect.bottom + window.scrollY + 5; 
+  }
+
+  popup.style.left = `${rect.left + window.scrollX}px`;
+  popup.style.top = `${topPosition}px`;
   popup.style.display = "flex";
 
   document.addEventListener("mousedown", hidePopupOnClickOutside);
