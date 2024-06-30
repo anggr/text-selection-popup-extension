@@ -1,6 +1,8 @@
 let selectedText = "";
+let scrollTimeout;
 
 document.addEventListener("mouseup", handleTextSelection);
+window.addEventListener("scroll", handleScroll);
 
 function handleTextSelection(event) {
   const selection = window.getSelection();
@@ -11,6 +13,18 @@ function handleTextSelection(event) {
   } else {
     hidePopup();
   }
+}
+
+function handleScroll() {
+ 
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout);
+  }
+
+  // Set a new timeout
+  scrollTimeout = setTimeout(() => {
+    hidePopup();
+  }, 100); 
 }
 
 function showPopup(event) {
