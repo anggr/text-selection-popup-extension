@@ -5,8 +5,48 @@ document.addEventListener("mouseup", handleMouseUp);
 document.addEventListener("selectionchange", handleSelectionChange);
 window.addEventListener("scroll", handleScroll);
 
+function isEditableElement(element) {
+  if (!element) return false;
+
+  if (
+    element.tagName === "INPUT" ||
+    element.tagName === "TEXTAREA" ||
+    element.tagName === "SELECT"
+  )
+    return true;
+
+  if (element.isContentEditable || element.contentEditable === "true")
+    return true;
+
+  if (element.ownerDocument && element.ownerDocument.designMode === "on")
+    return true;
+
+  const role = element.getAttribute("role");
+  if (role === "textbox" || role === "searchbox" || role === "combobox")
+    return true;
+
+  const classAndId = (element.className + " " + element.id).toLowerCase();
+  if (
+    classAndId.includes("search") ||
+    classAndId.includes("input") ||
+    classAndId.includes("textarea")
+  )
+    return true;
+
+  return false;
+}
+
 function handleMouseUp(event) {
   setTimeout(() => {
+    let currentElement = event.target;
+    while (currentElement) {
+      if (isEditableElement(currentElement)) {
+        hidePopup();
+        return;
+      }
+      currentElement = currentElement.parentElement;
+    }
+
     const selection = window.getSelection();
     selectedText = selection.toString().trim();
 
@@ -39,8 +79,8 @@ function showPopup(event) {
   const range = selection.getRangeAt(0);
   const rect = range.getBoundingClientRect();
 
-  const popupHeight = 40; 
-  const popupWidth = 100; 
+  const popupHeight = 40;
+  const popupWidth = 100;
 
   let topPosition = rect.top + window.scrollY - popupHeight - 5;
   let leftPosition = rect.left + window.scrollX + (rect.width - popupWidth) / 2;
@@ -58,7 +98,6 @@ function showPopup(event) {
   popup.style.top = `${topPosition}px`;
   popup.style.display = "flex";
 }
-
 function createPopup() {
   const popup = document.createElement("div");
   popup.id = "text-selection-popup";
@@ -119,7 +158,6 @@ function hidePopup() {
     popup.style.display = "none";
   }
 }
-
 
 document.addEventListener("mousedown", (event) => {
   if (popup && popup.contains(event.target)) {
