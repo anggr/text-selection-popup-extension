@@ -1,34 +1,35 @@
 let selectedText = "";
-let scrollTimeout;
+let popup = null;
 
-document.addEventListener("mouseup", handleTextSelection);
+document.addEventListener("mouseup", handleMouseUp);
+document.addEventListener("selectionchange", handleSelectionChange);
 window.addEventListener("scroll", handleScroll);
 
-function handleTextSelection(event) {
-  const selection = window.getSelection();
-  selectedText = selection.toString().trim();
+function handleMouseUp(event) {
+  setTimeout(() => {
+    const selection = window.getSelection();
+    selectedText = selection.toString().trim();
 
-  if (selectedText.length > 0) {
-    showPopup(event);
-  } else {
+    if (selectedText.length > 0) {
+      showPopup(event);
+    } else {
+      hidePopup();
+    }
+  }, 0);
+}
+
+function handleSelectionChange() {
+  const selection = window.getSelection();
+  if (selection.toString().trim().length === 0) {
     hidePopup();
   }
 }
 
 function handleScroll() {
- 
-  if (scrollTimeout) {
-    clearTimeout(scrollTimeout);
-  }
-
-  // Set a new timeout
-  scrollTimeout = setTimeout(() => {
-    hidePopup();
-  }, 100); 
+  hidePopup();
 }
 
 function showPopup(event) {
-  let popup = document.getElementById("text-selection-popup");
   if (!popup) {
     popup = createPopup();
     document.body.appendChild(popup);
@@ -39,23 +40,35 @@ function showPopup(event) {
   const rect = range.getBoundingClientRect();
 
   const popupHeight = 40; 
-  let topPosition = rect.top + window.scrollY - popupHeight - 5;
+  const popupWidth = 100; 
 
-  
+  let topPosition = rect.top + window.scrollY - popupHeight - 5;
+  let leftPosition = rect.left + window.scrollX + (rect.width - popupWidth) / 2;
+
   if (topPosition < window.scrollY) {
-    topPosition = rect.bottom + window.scrollY + 5; 
+    topPosition = rect.bottom + window.scrollY + 5;
+  }
+  if (leftPosition < window.scrollX) {
+    leftPosition = window.scrollX + 5;
+  } else if (leftPosition + popupWidth > window.innerWidth + window.scrollX) {
+    leftPosition = window.innerWidth + window.scrollX - popupWidth - 5;
   }
 
-  popup.style.left = `${rect.left + window.scrollX}px`;
+  popup.style.left = `${leftPosition}px`;
   popup.style.top = `${topPosition}px`;
   popup.style.display = "flex";
-
-  document.addEventListener("mousedown", hidePopupOnClickOutside);
 }
 
 function createPopup() {
   const popup = document.createElement("div");
   popup.id = "text-selection-popup";
+  popup.style.position = "absolute";
+  popup.style.zIndex = "1000";
+  popup.style.background = "#fff";
+  popup.style.border = "1px solid #ccc";
+  popup.style.borderRadius = "4px";
+  popup.style.padding = "5px";
+  popup.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
 
   const copyButton = createButton("Copy", copyText);
   const searchButton = createButton("Search", searchText);
@@ -69,15 +82,16 @@ function createPopup() {
 function createButton(text, onClick) {
   const button = document.createElement("button");
   button.textContent = text;
-  button.addEventListener("click", onClick);
+  button.style.marginRight = "5px";
+  button.style.padding = "5px 10px";
+  button.style.border = "none";
+  button.style.background = "#f0f0f0";
+  button.style.cursor = "pointer";
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    onClick();
+  });
   return button;
-}
-
-function hidePopupOnClickOutside(event) {
-  const popup = document.getElementById("text-selection-popup");
-  if (popup && !popup.contains(event.target)) {
-    hidePopup();
-  }
 }
 
 function copyText() {
@@ -85,11 +99,11 @@ function copyText() {
     .writeText(selectedText)
     .then(() => {
       console.log("Text copied to clipboard");
+      hidePopup();
     })
     .catch((err) => {
       console.error("Failed to copy text: ", err);
     });
-  hidePopup();
 }
 
 function searchText() {
@@ -101,9 +115,14 @@ function searchText() {
 }
 
 function hidePopup() {
-  const popup = document.getElementById("text-selection-popup");
   if (popup) {
     popup.style.display = "none";
   }
-  document.removeEventListener("mousedown", hidePopupOnClickOutside);
 }
+
+
+document.addEventListener("mousedown", (event) => {
+  if (popup && popup.contains(event.target)) {
+    event.preventDefault();
+  }
+});
